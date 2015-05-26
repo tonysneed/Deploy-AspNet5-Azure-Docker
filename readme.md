@@ -15,14 +15,16 @@
 2. Create a Linux Virtual Machine on the Azure Portal
   - Go to the Azure portal: `https://portal.azure.com`
   - If not a subscriber sign up for a free trial.
-  - Create a new VM using the image: `Ubuntu Server 14.04 LTS`
-    + Accept the default username: `azureuser`
-    + Enter a password (or upload an SSH key)
-    + Note the DNS name, for example: `docker-aspnet5.cloudapp.net`
+  - From the home page, create a new “Compute” service from the Azure Marketplace
+    + Select Virtual Machines, search for “docker”
+    + Select “Docker on Ubuntu Server” from Canonical and MS Open Tech
+    + Enter a host name, user name and password, then click Create
+
+3. Use Docker client to interact with Docker on the VM in Azure
   - Verify docker installation. Using docker client enter:
 
     ```
-    docker --tls -H tcp://docker-aspnet5.cloudapp.net:4243 info
+    docker --tls -H tcp://linux-docker1.cloudapp.net:4243 info
     ```
 
 3. Set docker host environment variable
