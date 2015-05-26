@@ -1,96 +1,54 @@
 # Deploy ASP.NET 5 Apps
-## To a Linux VM with Docker on Azure
+## To a Linux Virtual Machine with Docker on Azure
 
-1. Install **Docker Client for Windows**
+1. Create a Linux Virtual Machine with Docker using Visual Studio 2015 Tools for Docker
+  - If not a subscriber sign up for a free Azure trial:  `https://portal.azure.com`
+  - Install [Visual Studio 2015 Tools for Docker](https://visualstudiogallery.msdn.microsoft.com/6f638067-027d-4817-bcc7-aa94163338f0)
+    + This requires Visual Studio 2015
+  - Create a new Web project and select an empty ASP.NET 5 template
+    + Right-click on the generated project and select **Publish** from the context menu
+    + Under Profile, select Docker Containers, then click the New button
+    + Enter a unique DNS name, as well as an admin user name and password.
+    + Enter a password (or upload an SSH key)
+    + Note the full DNS name, for example: `linux-docker.cloudapp.net`
+    + Wait for Azure to provision the virtual machine by visiting the Azure portal.
 
-  - Install Docker Client for Windows using Chocolatey
-    + This installs just the Docker client, not the Docker engine for hosting containers
-  - Open an admin command prompt, then enter:
+2. Configure the docker command line interface
+  - Get basic information from the remote VM, supplying correct host name and port number
+
     ```
-    choco install docker -y
+    docker --tls -H tcp://linux-docker.cloudapp.net:2376 info
     ```
-  - To verify Docker installation enter: `docker`
-    + You should see a list of docker commands
+  - Set the docker_host environment variable:
+
+    ```
+    set docker_host=tcp://linux-docker.cloudapp.net:2376
+    ```
+  - Requesting docker info again: `docker --tls info`
     
-2. Create a Linux Virtual Machine on the Azure Portal
-  - Go to the Azure portal: `https://portal.azure.com`
-  - If not a subscriber sign up for a free trial.
-  - From the home page, create a new “Compute” service from the Azure Marketplace
-    + Select Virtual Machines, search for “docker”
-    + Select “Docker on Ubuntu Server” from Canonical and MS Open Tech
-    + Enter a host name, user name and password, then click Create
-
-3. Use Docker client to interact with Docker on the VM in Azure
-  - Verify docker installation. Using docker client enter:
+3. Execute docker commands to run the console app on the remote VM
+  - Run the console app residing on Docker Hub
 
     ```
-    docker --tls -H tcp://linux-docker1.cloudapp.net:4243 info
+    docker --tls run -t tonysneed/aspnet5-consoleapp
     ```
+  - This will print "Hello World" to the console
 
-3. Set docker host environment variable
-  - Enter `docker info`
-    + You'll see a message:
-    ```
-    An address incompatible with the requested protocol was used..
-    Are you trying to connect to a TLS-enabled daemon without TLS?
-    ```
-  - Enter the following:
-    ```
-    set docker_host=tcp://docker-aspnet5.cloudapp.net:4232
-    ```
-  - This time specify TLS when requesting docker info: `docker --tls info`
-    
-4. Run **console sample**
-  - Create ConsoleApp folder
-  - Go to the aspnet repo: https://github.com/aspnet/Home/tree/dev/samples/latest/ConsoleApp
-  - Download: project.json, program.cs
-  - Add a file called `Dockerfile` in the app directory with the following contents:
-    ```
-    FROM microsoft/aspnet:1.0.0-beta4
-    COPY . /app
-    WORKDIR /app
-    RUN ["dnu", "restore"]
-    
-    ENTRYPOINT ["dnx", ".", "run"]
-    ```
-  - From the app directory, build the docker image
-    ```
-    docker build -t consoleapp .
-    ```
-  - To verify enter: `docker images`
-  - Run the container:
+4. Execute docker commands to run the console app on the remote VM
+  - Run the web app residing on Docker Hub, mapping port 80 on the VM to port 5004 on the container
 
     ```
-    docker run -t consoleapp
+    docker --tls run -t -d -p 80:5004 tonysneed/aspnet5-webapp
     ```
-  - You should see the followint output: `Hello World`
-  
-5. Run **web sample**
-  - Create WebApp folder
-  - Go to the aspnet repo: https://github.com/aspnet/Home/tree/dev/samples/latest/HelloWeb
-  - Download: project.json, startup.cs
-  - Add a file called `Dockerfile` in the app directory with the following contents:
+  - Show the logs, substituting the number returned by the run command
 
     ```
-    FROM microsoft/aspnet:1.0.0-beta4
-    COPY . /app
-    WORKDIR /app
-    RUN ["dnu", "restore"]
-    
-    EXPOSE 5004
-    ENTRYPOINT ["dnx", ".", "kestrel"]
+    docker --tls logs f2de092f14b67590ae4dc08cd3a453a28271de0a8f27e6d80ec356cbc5151d43
     ```
-  - From the app directory, build the docker image
+  - Show the running containers
 
     ```
-    docker build -t webapp .
+    docker --tls ps
     ```
-  - To verify enter: `docker images`
-  - Run the container:
-
-    ```
-    docker run -t -d -p 5004:5004 webapp
-    ```
-  - To verify enter: `docker ps`
-  - Open a browser and go to: `http://localhost:5004`
+  - Open a browser and go to: `http://linux-docker.cloudapp.net`
 
